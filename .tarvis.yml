@@ -1,0 +1,11 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t saivachandran/docker-react  -f Dockerfikle.dev .    
+
+script:
+  - docker run -e CI=true saivachandran/docker-react npm run test -- --coverage     
+
