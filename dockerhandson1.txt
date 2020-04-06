@@ -193,7 +193,7 @@ view image id
 
 $ sudo docker images -q
 
-view full length image id
+~view full length image id
 
 $ sudo docker images centos --no-trunc
 
@@ -264,6 +264,24 @@ view container log
 
 $  sudo docker container logs continerid
 
+view last 100 container logs
+
+$ sudo docker logs --tail 100 552469f2687f
+
+view date wise container log
+
+$ sudo docker logs --since 2020-03-28 552469f2687f
+
+view container log with date format
+
+$ sudo docker container logs --tail 100 --timestamps 552469f2687f
+
+view docker-compose single app log
+
+$ docker-compose logs app
+
+
+
 rename docker container
 
 $ sudo docker container rename CONTAINER NEW_NAME
@@ -319,7 +337,7 @@ $ sudo systemctl enable docker
 create docker file for build own image
 
 But Docker also gives you the capability to create your own Docker images, and it can be done with the help of Docker Files. A Docker File is a simple text file with instructions on how to build your images.
-
+-----------------------------------------------------------------------------
 $ sudo vim Dockerfile
 
 #This is sample image
@@ -342,6 +360,94 @@ sudo docker build -t myimage:sai directory
 run container from image
 
 $ sudo docker run -it imageid /bin/bash
+
+
+nginx docker file
+
+vim Dockerfile
+
+# docker base image
+
+FROM ubuntu:latest
+
+# image maintainer name
+
+LABEL maintainer="chandransaiva@gmail.com"
+
+# update the latest package and upgrade package
+
+RUN apt-get update -y && apt-get upgrade -y
+
+# install nginx 
+
+RUN apt-get install nginx -y
+
+# expose nginx port 
+
+EXPOSE 80
+
+# start nginx default command
+
+CMD ["nginx", "-g", "daemon off;"] 
+
+-------------------------------------------------------------------
+
+build mysql docker image 
+
+pull docker myssql latest version form docker hub
+
+$ sudo docker pull mysql:latest
+
+$ sudo docker images
+
+$ sudo docker run --name db -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=saiva mysql:latest
+
+$ sudo docker ps
+
+
+$ sudo docker exec -it containerid /bin/bash
+
+# mysql -uroot -psaiva
+
+
+mysql> show databases;
+
+mysql> create database saiva;
+
+mysql> use saiva;
+
+mysql> create table thuval(id int(3) primary key, name varchar(20), mobileno varchar(20));
+
+mysql> show tables;
+
+mysql> insert into thuval values('1', 'kk', '9876543120');
+
+mysql> insert into thuval values('2', 'ss', '9878543120');
+
+mysql> select * from thuval;
+-------------------------------------------------------------------------------------------------------------
+mysql backup in docker conatiner
+
+sudo docker exec 7317c5fce3d7 /usr/bin/mysqldump -u root --password=saiva kaviya > /home/ubuntu/project/kaiya.sql
+
+
+mysql backup restre in docker container
+
+sudo cat kaiya.sql | docker exec -i 7317c5fce3d7 /usr/bin/mysql -u root --password=saiva test
+
+--------------------------------------------------------------------------------------------------------------
+
+copy file from container to host
+
+sudo docker cp 7317c5fce3d7:users .
+
+copy file from host to container
+
+sudo docker cp project/ 7317c5fce3d7:project
+
+--------------------------------------------------------------------------------------------------------------
+
+
 
 start continer
 
@@ -367,12 +473,23 @@ $ sudo docker push chandransaiva/my-first-repo:3
 
 
 view docker cpu and memory utilation 
-
+-----------------------------------------------------------------------------------------------------
 $ sudo docker stats
 
 allocate cpu usage and ram in docker image
 
 sudo docker run -it --cpus=".5" --memory="100m" ubuntu /bin/bash
+
+increase container resource
+
+sudo docker update --cpus=".4" --memory="300m" cputest
+
+if you facing docker swap not supporting error
+
+edit /etc/default/grub change like below
+
+GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"
+
 
 
 --oom-kill-disable
@@ -381,7 +498,7 @@ By default, if an out-of-memory (OOM) error occurs, the kernel kills processes i
 
 sudo docker run -it --oom-kill-disable --cpus=".5" --memory="50m" --memory-swap="100m" ubuntu /bin/bash
 
-
+---------------------------------------------------------------------------------------------------------
 create docker volume
 
 sudo docker volume --help
@@ -436,16 +553,72 @@ remove docker volume
 
 $ sudo docker volume rm my-vol
 
-create docker volume and mount to container
+docker volume mount
 
-sudo docker run --name myjenkins1 -v my-vol:/var/ubuntu_home -p 8080:8080 -p 50000:50000 jenkins
+step1
 
+pull jenkins from docker hub using below command
+
+$ sudo docker pull jenkins
+
+list the docker images it shows jenkins image
+
+$ sudo docker images
+
+run jenkins with attached volume
+
+$ sudo docker run --name MyJenkins -v saiva_volume:/var/jenkins_home -p 8080:8080 -p 50000:50000 jenkins:latest
+
+check docker container running or not
+
+$ sudo docker ps
+
+check browser jenkins server process
+
+ip:8080
+
+copy paste admin password
+
+create test job  in jenkins
+
+
+run another container with diffrent name with same volume
+
+$ sudo docker run --name MyJenkins1 -v saiva_volume:/var/jenkins_home -p 9090:8080 -p 60000:50000 jenkins:latest
+
+
+in browser
+
+ip:9090
+
+Admin
+
+password
+
+it will display test job because we share same volume
+
+bind mount instead of volume physical location for docker container
+
+permission error in aws instance run normal user 
+
+ $ docker run --name MyJenkins2 -v /home/ubuntu/Jenkins_Home:/var/jenkins_home -p 9191:8080 -p 40000:50000 jenkins:latest
+
+stop container and delete container
+
+$ sudo docker container stop container id
+
+$ sudo docker container rm containerid/containername
+
+reuse volume and files for another container
+
+
+-------------------------------------------------------------------------------------------------------
 
 view docker disk usage
 
 $ sudo docker system df -v
 
-
+------------------------------------------------------------------------------------------------------
 create docker network
 
 
@@ -565,7 +738,7 @@ uninstall docker container
 
 $ sudo rm /usr/local/bin/docker-compose
 
-
+---------------------------------------------------------------------------------
 create docker compose file
 
 $ sudo mkdir DockerComposeFile
@@ -604,6 +777,16 @@ run docker compose file with detach mode
 
 $ sudo docker-compose up -d 
 
+$ sudo docker-compose stop
+
+check runing or not
+
+$ sudo docker-compose ps
+
+start again
+
+$ sudo docker-compose start
+
 $ sudo docker ps
 
 $ sudo docker-compose down
@@ -615,6 +798,43 @@ $ sudo docker-compose up -d --scale database=3
 $ sudo docker ps
 
 $ sudo docker-compose down
+
+----------------------------------------------------------------------------------------------
+create mysql dockerfie
+
+cat docker-compose.yml
+version: '3.3'
+
+services:
+  db:
+   image: mysql:5.7
+   command: --default-authentication-plugin=mysql_native_password
+   restart: always
+   environment:
+     MYSQL_ROOT_PASSWORD: 'Saiva@123'       
+     MYSQL_DATABASE: 'saiva'
+   # mysq normal user
+     MYSQL_USER: 'saiva'
+   # set whatever password you like
+     MYSQL_PASSWORD: 'Saiva@123'
+   # mysql remote user
+     MYSQL_ROOT_HOST: '%'     
+
+   
+   ports:
+     - "3306:3306"
+   expose:
+     - "3306"
+volumes:
+  my-db: /var/lib/mysql
+
+  # name our volume
+  
+volumes:
+  my-db:       
+------------------------------------------------------------------------------------------------
+
+
 
 compose docker file with network and volume
 
@@ -654,12 +874,93 @@ volumes:
 
   mydata:
 
+
+$ sudo docker-compose config 
+
+networks:
+  chandran: {}
+services:
+  database:
+    image: mysql:latest
+    ports:
+    - 3306:3306/tcp
+  web:
+    image: nginx
+    ports:
+    - 9090:80/tcp
+version: '3.0'
+volumes:
+  mydata: {}
+
+
 $ sudo docker-compose up -d
 
 $ sudo docker ps
+---------------------------------------------------------------------------------------------
+create nginx database phpmyadmin network and volume
 
+vim docker-compose.yml
 
+version: '3.3'
 
+services:
+  web:
+    image: nginx
+    ports: 
+      - "80:80"
+    expose:
+      - "80"
+    networks:
+      frondend:      
+  db:
+   image: mysql:5.7
+   command: --default-authentication-plugin=mysql_native_password
+   restart: always
+   environment:
+     MYSQL_ROOT_PASSWORD: 'Saiva@123'       
+     MYSQL_DATABASE: 'saiva'
+   # mysq normal user
+     MYSQL_USER: 'saiva'
+   # set whatever password you like
+     MYSQL_PASSWORD: 'Saiva@123'
+   # mysql remote user
+     MYSQL_ROOT_HOST: '%'     
+   ports:
+     - "3306:3306"
+   expose:
+     - "3306" 
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links: 
+      - "db:db"
+    environment:
+      MYSQL_USER: 'saiva'
+      MYSQL_PASSWORD: 'Saiva@123'
+      MYSQL_ROOT_PASSWORD: 'saia@123'
+    ports:
+      - "8000:80"
+    expose:
+      - "8000"
+    networks:
+      backend:  
+
+volumes:
+  my-db: /var/lib/mysql       
+
+networks:  
+  frondend:
+    driver: bridge 
+  backend:
+    driver: bridge
+          
+
+    #name our volume
+  
+volumes:
+  my-db:       
+
+--------------------------------------------------------------------------------------------------------
 
 get logs from container
 
@@ -1307,102 +1608,341 @@ its automatically deployed to aws using docker
 
 you can refrese the elastic beanstalk page
 =======
+multi container deployment in docker
 
+single container deployment issues
 
+1. simple app no outside dependcies
 
+2.image build muliple times
 
+3.connect database from container
 
+----------------------------------------------------
+application overview
 
+fib sequence sequnce of number adding previous two numbers
 
+value  1  1 2  3  5 8 13 21
 
+index  0  1 2 
 
+fib ccalculator
 
+enter index value 7 
+--------------------------------------------
+aplication architechture
 
+user submits
 
+react app
 
+express app
 
+redis
 
+postgres
 
+worker
+------------------------------------------------
+worker process   date 23.03.2020
+ 
+create directory called complex
 
+$ mkdir complex
 
+$ cd complex
 
+$ mkdir worker
 
+$ cd worker
+-----------------------------------
+crete package.json file like below
 
+$ vim package.json
 
+{
+  "dependencies": { 
+    "nodemon": "1.8.3",
+    "redis": "2.8.0"    
 
->>>>>>> be361a9dbcbec4b4dcc7ac154eb6690adaa6ef3f
+  },	  
+ 
+  "script": {
+    "start": "node index.js",
+    "dev": "nodemon"    
 
+  }	  
 
+}
+--------------------------------------------
+create file called index.js
 
+vim index.js
 
+const key = require ('./keys');
 
+const redis = require ('redis');
 
+const redisClient = redis.createClient({
 
+  host: keys.redisHost,
+  port: keys.redisPort,
+  retry_stratgey: () => 1000
 
-<<<<<<< HEAD
-=======
-                                                                    
->>>>>>> be361a9dbcbec4b4dcc7ac154eb6690adaa6ef3f
+});
 
+const sub = redisClient.dupicate();
 
 
+function fib(index) {
+  if (index<2) return 1;
+  return fib(index-1) + fib(index-2);
+  
+}
 
+sub.on('message',(channel,message) => {
+  redisClient.hset('values', message, fib(parsInt(message)))		
 
+});
 
+sub.subscribe('insert');
+----------------------------------------------------
+create file called keys.js
 
-<<<<<<< HEAD
-       
-=======
->>>>>>> be361a9dbcbec4b4dcc7ac154eb6690adaa6ef3f
+vim keys.js
 
+module.exports = {
+  redisHost: process.env.REDIS_HOST,
+  redisPort: process.env.REDIS_PORT	
 
+}
+--------------------------------------------------
 
+in worker folder run node index.js it's shows below error
 
+$ node index.js
 
 
+Error: Cannot find module 'redis'
+Require stack:
 
+------------------------------------------------
+Express api setup
 
+create directory call server 
 
+$ cd server
 
+crete package.json
 
+$ vim pacakage.json
 
+{
+  "dependencies": {
+  "express": "4.16.3",
+  "pg": "7.4.3",
+  "redis": "2.8.0",
+  "cors": "2.8.4",
+  "nodemon": "1.8.13"
+            
+  },
+  "scripts": {
+    "dev": "nodemon",
+    "start": "node index.js" 
+  
+  }
+}
 
 
+create file called keys.js
 
+vim keys.js
 
+module.exports {
+  redisHost: process.env.REDIS_HOST,
+  redisPort: process.env.REDIS_PORT,
+  pgUser: process.env.PGUSER,
+  pgHost: process.env.PGHOST,
+  pgDatabase: process.env.PGDATABASE,
+  pgPassword: process.env.PGPASSWORD,
+  pgPort: process.env.PGPORT		
 
 
 
+};
 
+------------------------------------------------------------
 
+create index.js
 
+vim index.jsconst keys = require('./keys');
 
+//Express App setup
 
+const express = require('express');
 
+const bodyParser = require('body-parser');
 
+const cors = require('cors');
 
+const app = express();
 
+app.use(cors());
 
+app.use(bodyParser.json());
 
 
+//postgres client setup
 
+const {pool} = require('pg');
 
+const pgClient = new pool ({
 
+  user: keys.pgUser,
+  host: keys.pgHost,
+  database: keys.pgDatabase,
+  password: keys.pgPassword,
+  port: keys.pgPort	
+});
+	
+pgClient.on('error',() => console.log('Lost PG connection'));	
 
+pgClient
+  .query('CREAT TABLE IF NOT EXIST values (number INT)')
+  .catch(err => console.log(err)); 
+	
+	
+//redis client setup
 
+const redis = require('redis');
 
+const redisClient = redis.createClient({
+  host: keys.redisHost,
+  port: keys.redisPort,
+  retry_strategy: () => 1000
+});
 
+const redisPublisher = redisClient.duplicate();
 
+// Express route handlers
+app.get('/', (req, res) => {
+  res.send('HI');
+});
+app.get('/values/all', async (req, res) => { 
+  const values = await pgClient.query('SELECT * from values');
+  res.send(values.rows);	
+}); 
 
+app.get('/values/current', async (req, res) => {
+  redisClient.hgetall('values', (err,values) => {
+    res.send(values);
+  });
+});
 
 
+app.post('/values', async (req, res) => {
 
+  const index = req.body.index;
+  
+  if (parsInt(index) > 40) {
+    return res.status(422).send('Index too high');
+  }  
 
+  redisClient.hset('values', index, 'Noting Yet!')
+  redisPublisher.publish('insert', index);
+  pgClient.query('INSERT INTO values(number) values($1)', [index]);
+  res.send({working:true});	
+	
+});
 
-<<<<<<< HEAD
-=======
+app.listen(5000, err => {
+  console.log('Listening');
+});
+
+-------------------------------------------------------------
+	
+inside server directery
+
+$ node index.js
+
+
+it show express module not found it,s ok otherwise you make any mistake somewhere in file
+------------------------------------------------------------------------------------------
+inside the complex directory
+
+$ sudo create-react-app client
+
+cd cllent/src
+
+create Otherpage.js
+
+vim OtherPage.jsimport react from 'react';
+
+import {link} from 'react-router-dom';
+
+export default () => {
+
+  return (
+  
+   <div>
+     Im some other page!
+     <Link to="/">Go Back Home</Link>
+	  
+ 	  
+   </div>
+  
+  
+  );
+
+
+};
+
+esc
+:wq!
+---------------------------------------------
+
+create Fib.js file
+
+vim Fib.js
+
+import React, {component} from 'react';
+
+import axios from 'axios';
+
+class Fib extends component {
+  state= {
+    seenIndexes: [],
+    values: {},
+    index: ''	  
+  };
+}
+ 
+  componentDidMount() {
    
->>>>>>> be361a9dbcbec4b4dcc7ac154eb6690adaa6ef3f
+   this.fetchValues();
+   this.fetchIndexes();
+  }
+  
+  async fetchvalues() {
+    
+    const values = await axios.get('/api/values/current');
+    this.setState({values: values.data});	  
+
+  }
+ 
+  async fetchIndexes () {
+  
+    const seenIndexes = await axios.get('api/values/all');
+    this.setState({seenIndexes: seenIndexes.data});	  
+  
+  }
+
+ 
+ }
+esc
+:wq!
+-----------------------------------------------------------
 
 
 
@@ -1410,8 +1950,6 @@ you can refrese the elastic beanstalk page
 
 
 
-<<<<<<< HEAD
-   
 
 
 
@@ -1421,7 +1959,37 @@ you can refrese the elastic beanstalk page
 
 
 
-=======
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1438,7 +2006,6 @@ install nginx on ubuntu conatiner
 # apt-get install curl
 
 # curl localhost:80
->>>>>>> be361a9dbcbec4b4dcc7ac154eb6690adaa6ef3f
 
 
 
