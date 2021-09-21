@@ -1,4 +1,4 @@
-# docker dockerfile as image
+# build image using dockerfile
 
 $ docker build -t saiva/python:v1 .
 
